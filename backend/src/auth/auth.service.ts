@@ -1,37 +1,25 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async validateUser(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (user && await bcrypt.compare(password, user.password)) {
-      return user;
+  async register(email: string, password: string, name: string, role: string) {
+    // Verifica que el valor de role sea válido
+    if (!Object.values(Role).includes(role as Role)) {
+      throw new BadRequestException('Invalid role');
     }
-    return null;
-  }
 
-  async login(user: any) {
-    const payload = { email: user.email, sub: user.id, role: user.role };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
-  }
-
-  async register(email: string, password: string, name: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
     return this.prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
+        role: role as Role, // Asegúrate de que role sea del tipo Role
       },
     });
   }

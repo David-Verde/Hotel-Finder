@@ -9,33 +9,30 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthService = void 0;
+exports.ReviewsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
-const bcrypt = require("bcrypt");
-const client_1 = require("@prisma/client");
-let AuthService = class AuthService {
+let ReviewsService = class ReviewsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async register(email, password, name, role) {
-        if (!Object.values(client_1.Role).includes(role)) {
-            throw new common_1.BadRequestException('Invalid role');
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        return this.prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                name,
-                role: role,
-            },
+    async create(userId, placeId, rating, comment) {
+        return this.prisma.review.create({
+            data: { userId, placeId, rating, comment },
+            include: { user: true },
+        });
+    }
+    async getPlaceReviews(placeId) {
+        return this.prisma.review.findMany({
+            where: { placeId },
+            include: { user: true },
+            orderBy: { createdAt: 'desc' },
         });
     }
 };
-exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
+exports.ReviewsService = ReviewsService;
+exports.ReviewsService = ReviewsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
-], AuthService);
-//# sourceMappingURL=auth.service.js.map
+], ReviewsService);
+//# sourceMappingURL=reviews.service.js.map
